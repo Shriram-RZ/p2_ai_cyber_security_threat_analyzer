@@ -30,14 +30,17 @@ services:
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/cyber_threat_db
       SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
       FRONTEND_URL: http://localhost:3000
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-latest}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.1-8b-instant}
       ENVIRONMENT: ${ENVIRONMENT:-development}
     ports:
       - "8000:8000"
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://backend:8000
     container_name: cyber_frontend
     restart: unless-stopped
     depends_on:

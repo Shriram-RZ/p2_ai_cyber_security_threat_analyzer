@@ -1,5 +1,5 @@
 """High-level AI services for threat analysis. Each function returns a normalized dict.
-If the Gemini API is unavailable, a deterministic heuristic fallback is used so that
+If the Groq AI API is unavailable, a deterministic heuristic fallback is used so that
 the platform stays functional in demos / development."""
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import re
 from typing import Any
 
 from app.ai import prompts
-from app.ai.gemini_client import generate_json, generate_chat, GeminiError
+from app.ai.groq_client import generate_json, generate_chat, GroqError
 
 
 SEVERITY_TO_SCORE = {"low": 25, "medium": 55, "high": 80, "critical": 95}
@@ -24,7 +24,7 @@ async def analyze_log(content: str, log_type: str = "generic") -> dict[str, Any]
     prompt = prompts.THREAT_ANALYSIS_USER.format(log_type=log_type, content=content[:18000])
     try:
         data = await generate_json(prompt, system=prompts.THREAT_ANALYSIS_SYSTEM)
-    except (GeminiError, Exception):
+    except (GroqError, Exception):
         data = _heuristic_log_analysis(content, log_type)
 
     data["severity"] = _clamp_severity(data.get("severity"))

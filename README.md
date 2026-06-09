@@ -9,7 +9,7 @@
 ┌──────────────────────┐        ┌────────────────────┐       ┌────────────┐
 │   Next.js 14 (App)   │  HTTP  │  FastAPI / SQLA    │  SQL  │ PostgreSQL │
 │   Tailwind + Framer  │ <────▶ │  Auth · AI · SOC   │ ────▶ │   16       │
-│   Recharts · Sonner  │        │  Gemini Flash      │       └────────────┘
+│   Recharts · Sonner  │        │  Groq AI           │       └────────────┘
 └──────────────────────┘        └────────────────────┘
 ```
 
@@ -19,7 +19,7 @@
 | ---------------- | ----------------------------------------------------------------- |
 | Frontend         | Next.js 14 (App Router), TypeScript, Tailwind, Framer Motion, Recharts, Sonner, lucide-react |
 | Backend          | FastAPI, SQLAlchemy 2, Pydantic v2, JWT (python-jose), passlib/bcrypt, ReportLab |
-| AI               | Google Gemini Flash via REST (JSON-mode) with deterministic heuristic fallback |
+| AI               | Groq AI via REST with deterministic heuristic fallback           |
 | Database         | PostgreSQL 16                                                     |
 | Streaming        | Server-Sent Events for live threat feed                           |
 | Intel            | NVD CVE search, curated global feed                               |
@@ -31,7 +31,7 @@
 .
 ├── backend/
 │   ├── app/
-│   │   ├── ai/             # Gemini client + prompts
+│   │   ├── ai/             # Groq client + prompts
 │   │   ├── api/            # FastAPI routers
 │   │   ├── core/           # config, JWT, hashing
 │   │   ├── db/             # SQLAlchemy session
@@ -82,7 +82,7 @@ docker run -d --name cyber_db \
 
 ```bash
 cd backend
-cp .env.example .env       # then edit GEMINI_API_KEY (optional — heuristic fallback works without)
+cp .env.example .env       # then edit GROQ_API_KEY (optional — heuristic fallback works without)
 ./run.sh                   # creates venv, installs deps, starts uvicorn on :8000
 ```
 
@@ -107,7 +107,11 @@ Open <http://localhost:3000>, click **Get started**, and you'll land in the SOC 
 ## Run with docker-compose
 
 ```bash
-GEMINI_API_KEY=sk-... SECRET_KEY=$(openssl rand -hex 48) docker compose up --build
+cp .env.example .env
+# or in PowerShell:
+# copy .env.example .env
+
+docker compose up --build
 ```
 
 This spins up Postgres + FastAPI + Next.js. App available at <http://localhost:3000>.
@@ -124,8 +128,8 @@ This spins up Postgres + FastAPI + Next.js. App available at <http://localhost:3
 | `REFRESH_TOKEN_EXPIRE_DAYS`  | `7`                                                                |
 | `ALGORITHM`                  | `HS256`                                                            |
 | `FRONTEND_URL`               | `http://localhost:3000`                                            |
-| `GEMINI_API_KEY`             | _empty → heuristic fallback engages_                               |
-| `GEMINI_MODEL`               | `gemini-flash-latest`                                              |
+| `GROQ_API_KEY`                | _empty → heuristic fallback engages_                               |
+| `GROQ_MODEL`                  | `groq-1.5-mini`                                                     |
 | `ENVIRONMENT`                | `development`                                                      |
 
 ### Frontend (`frontend/.env.local`)
@@ -173,10 +177,10 @@ Auth uses an HTTP-only cookie (`ai_cyber_session`) **and** accepts `Authorizatio
 
 ## Notes on the AI integration
 
-`backend/app/ai/gemini_client.py` calls the Gemini REST endpoint with JSON-mode for analytic
+`backend/app/ai/groq_client.py` calls the Groq REST endpoint with JSON-mode for analytic
 endpoints (threat / phishing / malware) and free-form chat for the SOC assistant.
 
-If `GEMINI_API_KEY` is empty or the upstream fails, every analyzer transparently falls back to a
+If `GROQ_API_KEY` is empty or the upstream fails, every analyzer transparently falls back to a
 deterministic heuristic engine (see `services/threat_engine.py`) — so the platform stays
 fully functional in demos.
 
@@ -186,7 +190,7 @@ fully functional in demos.
 - Set `ENVIRONMENT=production` so cookies are flagged `Secure`.
 - Put the FastAPI service behind TLS (Caddy / nginx / Cloud Run / Fly.io).
 - Use a managed Postgres and back the database up.
-- Provide a real `GEMINI_API_KEY`.
+- Provide a real `GROQ_API_KEY`.
 - Restrict CORS via `FRONTEND_URL` to your real origin.
 - Consider Alembic migrations once you start changing the schema.
 
